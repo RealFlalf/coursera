@@ -8,10 +8,14 @@ class Client:
         self.timeout = timeout
 
     def get(self, key):
-        message = "get {}".format(key)
+        message = f"get {key}"
         with socket.create_connection((self.host, self.port), self.timeout) as sock:
             try:
                 sock.sendall(b"get {}\n")
+                data = sock.recv(1024).decode("utf-8")
+                if data.split("\n") != "ok":
+                    raise socket.error("Wrong command")
+                return data
             except socket.timeout:
                 print("get data timeout")
             except socket.error as ex:

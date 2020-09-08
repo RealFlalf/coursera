@@ -13,7 +13,7 @@ print('Соединение установлено:', addr)
 
 # переменная response хранит строку возвращаемую сервером, если вам для
 # тестирования клиента необходим другой ответ, измените ее
-response = b'ok\npalm.cpu 10.5 1501864247\neardrum.cpu 15.3 1501864259\n\n'
+response = b'odk\npalm.cpu 10.5 1501864247\neardrum.cpu 15.3 1501864259\n\n'
 
 while True:
     data = conn.recv(1024)

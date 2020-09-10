@@ -1,27 +1,69 @@
-# реализация сервера для тестирования метода get по заданию - Клиент для отправки метрик
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+import asyncio
+import bisect
 
-import socket
+class ServerError(Exception):
+    pass
 
-sock = socket.socket()
-sock.bind(('127.0.0.1', 8888))
-sock.listen(1)
-conn, addr = sock.accept()
 
-print('Соединение установлено:', addr)
 
-# переменная response хранит строку возвращаемую сервером, если вам для
-# тестирования клиента необходим другой ответ, измените ее
-response = b'ok\npalm.cpu 10.5 1501864247\neardrum.cpu 15.3 1501864259\n\n'
 
-while True:
-    data = conn.recv(1024)
-    if not data:
-        break
-    request = data.decode('utf-8')
-    print(f'Получен запрос: {ascii(request)}')
-    print(f'Отправлен ответ {ascii(response.decode("utf-8"))}')
-    conn.send(response)
 
-conn.close()
+
+class ClientServerProtocol(asyncio.Protocol):
+    full_data = {}
+    def connection_made(self, transport):
+        print("Client connected")
+        self.transport = transport
+
+
+
+    def data_received(self, data):
+        resp = self.process_data(data.decode())
+        self.transport.write(resp.encode())
+
+    def process_data(self, rec_data):
+        method = rec_data.split()[0]
+        if method == "put":
+            return self.put(rec_data)
+        elif method == "get":
+            return self.get(rec_data)
+        else:
+            raise ServerError
+        return rec_data
+
+    def put(self, rec_data):
+        try:
+            key, value, timestamp = rec_data.split()[1::]
+            if key not in self.full_data:
+                self.full_data[key] = []
+            bisect.insort(self.full_data[key], ((int(timestamp), float(value))))
+        except ValueError:
+            raise ServerError
+        print(self.full_data)
+        return "ok\n\n"
+
+    def get(self):
+        pass
+
+
+def run_server(host, port):
+    loop = asyncio.get_event_loop()
+    coro = loop.create_server(
+        ClientServerProtocol,
+        host, port
+    )
+
+    server = loop.run_until_complete(coro)
+
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+
+    server.close()
+    loop.run_until_complete(server.wait_closed())
+    loop.close()
+
+
+if __name__ == '__main__':
+    run_server('127.0.0.1', 8181)

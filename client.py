@@ -1,5 +1,11 @@
+import bisect
 import socket
 import time
+
+
+class ClientError(Exception):
+    """класс исключений клиента"""
+    pass
 
 
 class Client:
@@ -7,51 +13,71 @@ class Client:
         self.host = host
         self.port = port
         self.timeout = timeout
+
         try:
-            self.sock = socket.create_connection((self.host, self.port), self.timeout)
+            self.connection = socket.create_connection((host, port), timeout)
         except socket.error as err:
-            print(err)
+            raise ClientError("Cannot create connection", err)
 
-    def __del__(self):
-        self.sock.close()
+    def _read(self):
 
-    def put(self, metric, value, timestamp=None):
-        if timestamp is None:
-            msg = str.encode(f"put {metric} {value} {int(time.time())}\n")
-        else:
-            msg = str.encode(f"put {metric} {value} {timestamp}\n")
+        data = b""
+
+        while not data.endswith(b"\n\n"):
+            try:
+                data += self.connection.recv(1024)
+            except socket.error as err:
+                raise ClientError("Error reading data from socket", err)
+
+        return data.decode('utf-8')
+
+    def _send(self, data):
+
         try:
-            self.sock.sendall(msg)
-        except socket.ClientError as ex:
-            print("error", ex)
+            self.connection.sendall(data)
+        except socket.error as err:
+            raise ClientError("Error sending data to server", err)
+
+    def put(self, key, value, timestamp=None):
+
+        timestamp = timestamp or int(time.time())
+        self._send(f"put {key} {value} {timestamp}\n".encode())
+        raw_data = self._read()
+
+        if raw_data == 'ok\n\n':
+            return
+        raise ClientError('Server returns an error')
 
     def get(self, key):
-        message = str.encode(f"get {key}\n")
-        bytes(message)
+
+        self._send(f"get {key}\n".encode())
+        raw_data = self._read()
+        data = {}
+        status, payload = raw_data.split("\n", 1)
+        payload = payload.strip()
+
+        if status != 'ok':
+            raise ClientError('Server returns an error')
+
+        if payload == '':
+            return data
+
         try:
-            self.sock.sendall(message)
-            data = self.sock.recv(1024).decode("utf-8")
-            if data.split("\n")[0] != "ok":
-                raise socket.ClienError
-            dic = {}
-            resp = data.split("\n")
-            for i in resp[1:len(resp) - 2]:
-                metrics = i.split()
-                key = metrics[0]
-                timestamps = [int(tmp) for tmp in metrics[2::2]]
-                value = [float(vl) for vl in metrics[1::2]]
-                msg = []
-                for j in range(len(timestamps)):
-                    msg.append((timestamps[j], value[j]))
-                dic[key] = sorted(msg)
-            return dic
-        except socket.timeout:
-            print("get data timeout")
-        except socket.ClientError as ex:
-            print("error", ex)
 
+            for row in payload.splitlines():
+                key, value, timestamp = row.split()
+                if key not in data:
+                    data[key] = []
+                bisect.insort(data[key], ((int(timestamp), float(value))))
 
-if __name__ == '__main__':
-    client = Client("127.0.0.1", 8888, timeout=15)
-    client.put("asd", "asd", 15)
-    print(client.get("*"))
+        except Exception as err:
+            raise ClientError('Server returns invalid data', err)
+
+        return data
+
+    def close(self):
+
+        try:
+            self.connection.close()
+        except socket.error as err:
+            raise ClientError("Error. Do not close the connection", err)

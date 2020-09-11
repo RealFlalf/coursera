@@ -36,14 +36,22 @@ class ClientServerProtocol(asyncio.Protocol):
             key, value, timestamp = rec_data.split()[1::]
             if key not in self.full_data:
                 self.full_data[key] = []
-            bisect.insort(self.full_data[key], ((int(timestamp), float(value))))
+            metric = dict(self.full_data[key])
+            timestamp = int(timestamp)
+            if timestamp in list(metric.keys()):
+                metric[timestamp] = float(value)
+                self.full_data[key] = sorted(list(metric.items()))
+            else:
+                bisect.insort(self.full_data[key], (timestamp, float(value)))
         except ValueError:
             raise ServerError
         print(self.full_data)
         return "ok\n\n"
 
-    def get(self):
-        pass
+    def get(self, rec_data):
+        if rec_data == "get *\n":
+            resp = "ok\n"
+            return str(self.full_data)
 
 
 def run_server(host, port):

@@ -66,6 +66,7 @@ def run(host, port):
         client2.put("k2", 30, timestamp=4)
         client1.put("k2", 40, timestamp=5)
         client1.put("k2", 41, timestamp=5)
+        print("Test put - ok")
     except Exception as err:
         print(f"Ошибка вызова client.put(...) {err.__class__}: {err}")
         sys.exit(1)
@@ -81,6 +82,7 @@ def run(host, port):
             print(f"client.get('*') вернул неверный результат. Ожидается: "
                   f"{expected_metrics}. Получено: {metrics}")
             sys.exit(1)
+        print("Test get * - ok", metrics)
     except Exception as err:
         print(f"Ошибка вызова client.get('*') {err.__class__}: {err}")
         sys.exit(1)

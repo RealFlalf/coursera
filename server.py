@@ -1,21 +1,17 @@
 import asyncio
 import bisect
 
+
 class ServerError(Exception):
     pass
 
 
-
-
-
-
 class ClientServerProtocol(asyncio.Protocol):
     full_data = {}
+
     def connection_made(self, transport):
         print("Client connected")
         self.transport = transport
-
-
 
     def data_received(self, data):
         resp = self.process_data(data.decode())
@@ -51,6 +47,9 @@ class ClientServerProtocol(asyncio.Protocol):
     def get(self, rec_data):
         if rec_data == "get *\n":
             resp = "ok\n"
+            for key, metric in self.full_data.items():
+                for value in metric:
+                    resp +=
             return str(self.full_data)
 
 

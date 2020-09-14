@@ -5,9 +5,7 @@ import os
 class CarBase:
     def __init__(self, brand, photo_file_name, carrying):
         if os.path.splitext(photo_file_name)[1] not in (".jpg", ".jpeg", ".png", ".gif"):
-            raise TypeError
-        if brand == '' or photo_file_name == '' or carrying == '':
-            raise TypeError
+            raise ValueError
         self.brand = brand
         self.photo_file_name = photo_file_name
         self.carrying = float(carrying)
@@ -20,8 +18,6 @@ class CarBase:
 class Car(CarBase):
     def __init__(self, brand, photo_file_name, carrying, passenger_seats_count):
         super().__init__(brand, photo_file_name, carrying)
-        if passenger_seats_count == "":
-            raise TypeError
         self.passenger_seats_count = int(passenger_seats_count)
         self.car_type = "car"
 
@@ -49,8 +45,6 @@ class Truck(CarBase):
 class SpecMachine(CarBase):
     def __init__(self, brand, photo_file_name, carrying, extra):
         super().__init__(brand, photo_file_name, carrying)
-        if extra == "":
-            raise TypeError
         self.extra = extra
         self.car_type = "spec_machine"
 
@@ -58,7 +52,7 @@ class SpecMachine(CarBase):
 def get_car_list(csv_filename):
     car_list = []
     try:
-        with open(csv_filename) as csv_fd:
+        with open(file_path) as csv_fd:
             reader = csv.DictReader(csv_fd, delimiter=';')
             # next(reader)  # пропускаем заголовок
             for row in reader:
@@ -90,4 +84,5 @@ if __name__ == '__main__':
     # print(spec_machine.car_type, spec_machine.brand, spec_machine.carrying, spec_machine.photo_file_name, spec_machine.extra, sep='\n')
     # spec_machine.get_photo_file_ext()
     cars = get_car_list('coursera_week3_cars.csv')
+    print(len(cars))
     print(len(cars))

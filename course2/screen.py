@@ -36,26 +36,41 @@ class Vec2d:
 
 
 class Polyline:
-    def __init__(self, v1, v2, v3):
+    def __init__(self):
         self.points = ()
-        self.points.append(v1, v2, v3)
+        self. speed = ()
+
+    def add_point(self, v, s):
+        self.points.append(Vec2d(v))
+        self.speed.append(Vec2d(s))
+
+    def set_points(self):
+        """функция перерасчета координат опорных точек"""
+        for p in range(len(self.points)):
+            self.points[p] = self.points[p] + self.speeds[p]
+            if self.points[p][0] > SCREEN_DIM[0] or self.points[p][0] < 0:
+                self.speeds[p] = (- self.speeds[p][0], self.speeds[p][1])
+            if self.points[p][1] > SCREEN_DIM[1] or self.points[p][1] < 0:
+                self.speeds[p] = (self.speeds[p][0], -self.speeds[p][1])
+
+    def draw_points(self, style="points", width=3, color=(255, 255, 255)):
+        """функция отрисовки точек на экране"""
+        if style == "line":
+            for p_n in range(-1, len(self.points) - 1):
+                pygame.draw.line(gameDisplay, color,
+                                 (int(self.points[p_n][0]), int(self.points[p_n][1])),
+                                 (int(self.points[p_n + 1][0]), int(self.points[p_n + 1][1])), width)
+
+        elif style == "points":
+            for p in self.points:
+                pygame.draw.circle(gameDisplay, color,
+                                   (int(p[0]), int(p[1])), width)
+
+class Knot(Polyline):
 
 # =======================================================================================
 # Функции отрисовки
 # =======================================================================================
-def draw_points(points, style="points", width=3, color=(255, 255, 255)):
-    """функция отрисовки точек на экране"""
-    if style == "line":
-        for p_n in range(-1, len(points) - 1):
-            pygame.draw.line(gameDisplay, color,
-                             (int(points[p_n][0]), int(points[p_n][1])),
-                             (int(points[p_n + 1][0]), int(points[p_n + 1][1])), width)
-
-    elif style == "points":
-        for p in points:
-            pygame.draw.circle(gameDisplay, color,
-                               (int(p[0]), int(p[1])), width)
-
 
 def draw_help():
     """функция отрисовки экрана справки программы"""

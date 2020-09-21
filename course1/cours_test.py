@@ -1,5 +1,5 @@
 import unittest
-from week4_file import File
+from course1.week4_file import File
 
 class Car_test(unittest.TestCase):
     def test_create_and_write(self):

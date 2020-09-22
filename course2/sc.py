@@ -108,6 +108,7 @@ def get_knot(points, count):
         ptn.append(mul(add(points[i + 1], points[i + 2]), 0.5))
 
         res.extend(get_points(ptn, count))
+        print(res)
     return res
 
 

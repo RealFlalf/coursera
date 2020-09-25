@@ -31,39 +31,22 @@ class System:
         self.lightmap = light_mapper.lighten(self.map)
 
 
-class MappingAdapter(Light):
+class MappingAdapter:
     def __init__(self, adaptee):
         self.adaptee = adaptee
 
-    def lighten(self, map):
+    def lighten(self, map_):
+        dim = (len(map_[0]), len(map_))
+        self.adaptee.set_dim(dim)
         lmap = []
         omap = []
-        for i in range(len(syst.map)):
-            try:
-                lmap.append((i, syst.map[i].index(1)))
-            except ValueError:
-                pass
-            try:
-                omap.append((i, syst.map[i].index(-1)))
-            except ValueError:
-                pass
-        self.adaptee.set_lights(lmap)
+        for i in range(dim[0]):
+            for j in range(dim[1]):
+                if map_[j][i] == 1:
+                    lmap.append((i, j))
+                elif map_[j][i] == -1:
+                    omap.append((i, j))
         self.adaptee.set_obstacles(omap)
-        return self.adaptee.grid
-        print(lmap, omap)
+        self.adaptee.set_lights(lmap)
+        return self.adaptee.generate_lights()
 
-
-if __name__ == '__main__':
-    syst = System()
-    lmap = []
-    omap = []
-    for i in range(len(syst.map)):
-        try:
-            lmap.append((i, syst.map[i].index(1)))
-        except ValueError:
-            pass
-    lght = Light((30, 20))
-    # syst.get_lightening(lght)
-    adp = MappingAdapter(lght)
-    syst.get_lightening(adp)
-    print("done")
